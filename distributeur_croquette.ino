@@ -34,7 +34,7 @@ void rotateMotor(int angle) {
 }
 
 void loop() {
-  scale.set_scale(calibration_factor); 
+  scale.set_scale(calibration_factor);
   g = scale.get_units(10);
 
   Serial.print("Poids: ");
