@@ -46,4 +46,4 @@ L'ESP32 a été choisi pour ce projet en raison de sa connectivité WiFi, qui pe
 
 ## 💻 Code
 
-Le code source du projet se trouve dans le fichier `distributeur.ino`.
+Le code source du projet se trouve dans le fichier `distributeur_croquette.ino`.
