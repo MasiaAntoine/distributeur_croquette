@@ -21,20 +21,24 @@ L'ESP32 a été choisi pour ce projet en raison de sa connectivité WiFi, qui pe
 ## 🔌 Schéma de Connexion
 
 - **ESP32** :
+
   - GPIO 5 : DT du module HX711
   - GPIO 4 : SCK du module HX711
   - GPIO 27 : IN1 du module L298N
   - GPIO 26 : IN2 du module L298N
 
 - **Module HX711** :
+
   - DT : GPIO 5 de l'ESP32
   - SCK : GPIO 4 de l'ESP32
 
 - **Module L298N** :
+
   - IN1 : GPIO 27 de l'ESP32
   - IN2 : GPIO 26 de l'ESP32
 
 - **Moteur TT DC** :
+
   - Connecté aux sorties du module L298N
 
 - **Adaptateur d'alimentation** :
@@ -42,4 +46,4 @@ L'ESP32 a été choisi pour ce projet en raison de sa connectivité WiFi, qui pe
 
 ## 💻 Code
 
-Le code source du projet se trouve dans le fichier `distributeur_croquette.ino`.
+Le code source du projet se trouve dans le fichier `distributeur.ino`.
