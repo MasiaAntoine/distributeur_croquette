@@ -2,48 +2,49 @@
 
 HX711 scale(5, 4);
 
-// Pins du moteur sur le L298N
-const int in1 = 27;
-const int in2 = 26;
-
-float calibration_factor = -200;
-float g;
+float calibration_factor = -200; // this calibration factor is adjusted according to my load cell
+float units;
+float ounces;
 
 void setup() {
-  Serial.begin(115200);
-
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("HX711 calibration sketch");
+  Serial.println("Remove all weight from scale");
+  Serial.println("After readings begin, place known weight on scale");
+  Serial.println("Press + or a to increase calibration factor");
+  Serial.println("Press - or z to decrease calibration factor");
 
   scale.set_scale();
-  scale.tare();
-}
+  scale.tare();  //Reset the scale to 0
 
-void rotateMotor(int angle) {
-  int duration = (angle * 166) / 20; // Approximation basée sur 200 RPM
-  if (angle > 0) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-  } else {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-  }
-  delay(abs(duration)); // Temps d'activation proportionnel à l'angle
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, LOW);
+  long zero_factor = scale.read_average(); //Get a baseline reading
+  Serial.print("Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
+  Serial.println(zero_factor);
 }
 
 void loop() {
-  scale.set_scale(calibration_factor);
-  g = scale.get_units(10);
 
-  Serial.print("Poids: ");
-  Serial.print(g);
-  Serial.println(" grams");
-  delay(10);
+  scale.set_scale(calibration_factor); //Adjust to this calibration factor
 
-  // rotateMotor(15);
-  // delay(500);
-  // rotateMotor(-15);
-  // delay(500);
+  Serial.print("Reading: ");
+  units = scale.get_units(), 10;
+  if (units < 0)
+  {
+    units = 0.00;
+  }
+  ounces = units * 0.035274;
+  Serial.print(units);
+  Serial.print(" grams"); 
+  Serial.print(" calibration_factor: ");
+  Serial.print(calibration_factor);
+  Serial.println();
+
+  if(Serial.available())
+  {
+    char temp = Serial.read();
+    if(temp == '+' || temp == 'a')
+      calibration_factor += 1;
+    else if(temp == '-' || temp == 'z')
+      calibration_factor -= 1;
+  }
 }
