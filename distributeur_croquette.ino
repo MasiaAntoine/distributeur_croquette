@@ -6,8 +6,16 @@ HX711 scale(5, 4);
 const int in1 = 27;
 const int in2 = 26;
 
-float calibration_factor = -200;
+float calibration_factor = -209;
 float g;
+
+// Variables de configuration
+float grammageCible = 30.0;  // Quantité de croquettes désirée en grammes
+float facteurCorrection = 0.7;  // Facteur de correction (70% du poids cible pour la fermeture anticipée)
+
+// Variable pour contrôler la distribution des croquettes
+boolean distributionEnCours = true;
+boolean trappeOuverte = false; // Nouvelle variable pour suivre l'état de la trappe
 
 void setup() {
   Serial.begin(115200);
@@ -42,8 +50,28 @@ void loop() {
   Serial.println(" grams");
   delay(10);
 
-  // rotateMotor(15);
-  // delay(500);
-  // rotateMotor(-15);
-  // delay(500);
+  if (distributionEnCours) {
+    // Ouvrir la trappe une seule fois au début de la distribution
+    if (!trappeOuverte) {
+      rotateMotor(15);
+      trappeOuverte = true;
+      Serial.println("Trappe ouverte");
+    }
+
+    // Calculer le seuil de fermeture avec le facteur de correction
+    float seuilFermeture = grammageCible * facteurCorrection;
+
+    // Vérifier si on a atteint le seuil de fermeture
+    if (g >= seuilFermeture) {
+      distributionEnCours = false;
+      // Fermer le moteur
+      rotateMotor(-15);
+      Serial.println("Distribution terminée");
+      Serial.print("Poids final visé: ");
+      Serial.print(grammageCible);
+      Serial.print("g - Seuil de fermeture: ");
+      Serial.print(seuilFermeture);
+      Serial.println("g");
+    }
+  }
 }
