@@ -7,7 +7,7 @@ float units;
 float ounces;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("HX711 calibration sketch");
   Serial.println("Remove all weight from scale");
   Serial.println("After readings begin, place known weight on scale");
