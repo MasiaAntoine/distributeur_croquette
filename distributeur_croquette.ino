@@ -2,7 +2,7 @@
 
 HX711 scale(5, 4);
 
-float calibration_factor = -200; // this calibration factor is adjusted according to my load cell
+float calibration_factor = -209; // this calibration factor is adjusted according to my load cell
 float units;
 float ounces;
 
