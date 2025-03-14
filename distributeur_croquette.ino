@@ -42,6 +42,16 @@ void rotateMotor(int angle) {
 }
 
 void loop() {
+  // Vérifier si des données sont disponibles sur le port série
+  if (Serial.available() > 0) {
+    char commande = Serial.read();
+    if (commande == 'r') {
+      distributionEnCours = true;
+      trappeOuverte = false;
+      Serial.println("Réinitialisation de la distribution");
+    }
+  }
+
   scale.set_scale(calibration_factor);
   g = scale.get_units(10);
 
