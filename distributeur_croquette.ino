@@ -1,22 +1,12 @@
-#include "HX711.h"
-
-HX711 scale(5, 4);
-
 // Pins du moteur sur le L298N
 const int in1 = 27;
 const int in2 = 26;
-
-float calibration_factor = -200;
-float g;
 
 void setup() {
   Serial.begin(115200);
 
   pinMode(in1, OUTPUT);
   pinMode(in2, OUTPUT);
-
-  scale.set_scale();
-  scale.tare();
 }
 
 void rotateMotor(int angle) {
@@ -34,16 +24,8 @@ void rotateMotor(int angle) {
 }
 
 void loop() {
-  scale.set_scale(calibration_factor);
-  g = scale.get_units(10);
-
-  Serial.print("Poids: ");
-  Serial.print(g);
-  Serial.println(" grams");
-  delay(10);
-
-  // rotateMotor(15);
-  // delay(500);
-  // rotateMotor(-15);
-  // delay(500);
+  rotateMotor(15);
+  delay(1500);
+  rotateMotor(-15);
+  delay(1500);
 }
