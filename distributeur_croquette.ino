@@ -11,12 +11,14 @@ float g;
 
 // Variables de configuration
 float grammageCible = 30.0;  // Quantité de croquettes désirée en grammes
-float facteurCorrection = 0.3;  // Facteur de correction réduit à 30% pour fermer bien plus tôt
+float facteurCorrection = 0.30;  // Facteur de correction du poids
 
 // Variables pour surveiller la vitesse de distribution
 float dernierPoids = 0.0;
+float poidsAvantDernier = 0.0;
 unsigned long dernierTemps = 0;
 float vitesseDist = 0.0; // grammes par seconde
+float acceleration = 0.0; // accélération de distribution
 
 // Variable pour contrôler la distribution des croquettes
 boolean distributionEnCours = true;
@@ -45,7 +47,7 @@ void rotateMotor(int angle) {
     digitalWrite(in1, LOW);
     digitalWrite(in2, HIGH);
   }
-  delay(abs(duration)); // Temps d'activation proportionnel à l'angle
+  delay(abs(duration));
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
 }
@@ -54,7 +56,7 @@ void loop() {
   // Vérifier si des données sont disponibles sur le port série
   if (Serial.available() > 0) {
     String commande = Serial.readStringUntil('\n');
-    
+
     if (commande.equals("r")) {
       distributionEnCours = true;
       trappeOuverte = false;
@@ -78,13 +80,25 @@ void loop() {
   Serial.print("Poids: ");
   Serial.print(g);
   Serial.println(" grams");
-  
-  // Calcul de la vitesse de distribution
+
+  // Calcul de la vitesse de distribution et accélération
   unsigned long tempsActuel = millis();
-  if (tempsActuel - dernierTemps > 500) { // Toutes les 500ms
-    vitesseDist = (g - dernierPoids) * 1000 / (tempsActuel - dernierTemps); // g/s
+  if (tempsActuel - dernierTemps > 250) { // Mesure plus fréquente (toutes les 250ms)
+    float deltaTemps = (tempsActuel - dernierTemps) / 1000.0; // en secondes
+    float ancienneVitesse = vitesseDist;
+    vitesseDist = (g - dernierPoids) / deltaTemps; // g/s
+    acceleration = (vitesseDist - ancienneVitesse) / deltaTemps; // g/s²
+
+    poidsAvantDernier = dernierPoids;
     dernierPoids = g;
     dernierTemps = tempsActuel;
+
+    // Afficher la vitesse uniquement pendant la distribution
+    if (distributionEnCours && trappeOuverte) {
+      Serial.print("Vitesse: ");
+      Serial.print(vitesseDist);
+      Serial.println(" g/s");
+    }
   }
 
   if (distributionEnCours) {
@@ -97,13 +111,30 @@ void loop() {
       dernierPoids = 0;
     }
 
-    // Calculer le seuil de fermeture avec facteur variable
-    float seuilFermeture = grammageCible * facteurCorrection;
-    
-    // Fermer plus tôt si la vitesse de distribution est élevée
-    if (vitesseDist > 10) { // Si plus de 10g/s
-      seuilFermeture *= 0.8; // Réduire encore de 20%
+    // Calculer le seuil de fermeture avec prédiction avancée
+    float seuilBase = grammageCible * facteurCorrection;
+
+    // Prédiction du dépassement basée sur la vitesse et l'accélération
+    float tempsEstimeFermeture = 0.8f; // temps estimé pour fermer la trappe (secondes)
+    float depassementPredit = vitesseDist * tempsEstimeFermeture + 0.5f * acceleration * tempsEstimeFermeture * tempsEstimeFermeture;
+
+    // Ajuster dynamiquement le seuil selon la vitesse de distribution et le dépassement prédit
+    float seuilFermeture = seuilBase;
+    if (vitesseDist > 0) {
+      // Plus la vitesse est élevée, plus on ferme tôt
+      // Correction: utiliser des float explicites pour éviter les erreurs de type
+      float valMin = 1.0f;
+      float difference = grammageCible - depassementPredit;
+      seuilFermeture = (difference > valMin) ? difference : valMin;
+
+      // Ne jamais dépasser 20% du grammage cible comme seuil max
+      float seuilMax = grammageCible * 0.2f;
+      seuilFermeture = (seuilFermeture < seuilMax) ? seuilFermeture : seuilMax;
     }
+
+    Serial.print("Seuil: ");
+    Serial.print(seuilFermeture);
+    Serial.println("g");
 
     // Vérifier si on a atteint le seuil de fermeture
     if (g >= seuilFermeture) {
@@ -111,16 +142,16 @@ void loop() {
       Serial.print("Fermeture à: ");
       Serial.print(g);
       Serial.println("g (seuil de fermeture atteint)");
-      
+
       // Fermer le moteur
-      rotateMotor(-15);
-      
+      rotateMotor(-14);
+
       // Attendre un moment pour que les croquettes finissent de tomber
       delay(1000);
-      
+
       // Mesurer le poids final
       poidsFinal = scale.get_units(10);
-      
+
       Serial.println("Distribution terminée");
       Serial.print("Poids final visé: ");
       Serial.print(grammageCible);
@@ -131,6 +162,6 @@ void loop() {
       Serial.println("g");
     }
   }
-  
+
   delay(10);
 }
